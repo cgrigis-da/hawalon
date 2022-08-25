@@ -1,0 +1,182 @@
+-- Copyright (c) 2022 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+module Hawala where
+
+import Daml.Script
+import qualified DA.Text as Text
+import qualified DA.List.Total as List
+import DA.Optional
+
+template HawalaAccount with
+    owner: Party
+    fee: Decimal
+    observers: [Party]
+  where
+    signatory owner
+    observer observers
+
+    key owner: Party
+    maintainer key
+
+    choice UpdateFee: ContractId HawalaAccount
+      with
+        newFee: Decimal
+      controller owner
+      do
+        create this with fee = newFee
+
+template Iou with
+    issuer: Party
+    owner: Party
+    amount: Decimal
+  where
+    signatory issuer, owner
+
+    choice Redeem: ()
+      controller owner
+      do
+        return ()
+
+template LockedIou with
+    iou: Iou
+    hash: Text
+  where
+    signatory iou.issuer
+    observer iou.owner
+
+    nonconsuming choice ChainWith: ContractId LockedIou
+      with
+        next: Party
+      controller iou.owner
+      do
+        (fid, f) <- fetchByKey @HawalaAccount iou.owner
+        let newIou = Iou with
+              issuer = iou.owner
+              owner = next
+              amount = iou.amount * (1.0 - f.fee)
+
+        create this with iou = newIou
+
+    choice Unlock: ()
+      with
+        password: Text
+      controller iou.owner
+      do
+        assertMsg "Invalid password" (Text.sha256 password == hash)
+
+        create iou
+
+        create Reveal with
+          owner = iou.issuer
+          password
+
+        return ()
+
+template Reveal with
+    owner: Party
+    password: Text
+  where
+    signatory owner
+
+    choice GetPassword: Text
+      controller owner
+      do
+        return password
+
+test_simple_unlock = script do
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+
+  let password = "Abracadabra"
+  let badPassword = "Open sesame"
+  let hash = Text.sha256 password
+
+  lockedIou <- submit alice do
+    createCmd LockedIou with
+      iou = Iou with issuer = alice; owner = bob; amount = 100.0
+      hash = hash
+
+  -- Alice can't unlock with an incorrect password
+  submitMustFail alice do
+    exerciseCmd lockedIou Unlock with
+      password = badPassword
+
+  -- ... nor with the correct password
+  submitMustFail alice do
+    exerciseCmd lockedIou Unlock with
+      password = password
+
+  -- Bob can't unlock with an incorrect password
+  submitMustFail bob do
+    exerciseCmd lockedIou Unlock with
+      password = badPassword
+
+  -- ... but is successful with the right password
+  submit bob do
+    exerciseCmd lockedIou Unlock with
+      password = password
+
+test_2 = script do
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  hawaladar1 <- allocateParty "Hawaladar 1"
+  hawaladar2 <- allocateParty "Hawaladar 2"
+
+  let users = [alice, bob, hawaladar1, hawaladar2]
+
+  submit hawaladar1 do createCmd HawalaAccount with owner = hawaladar1; fee = 0.03; observers = users
+  submit hawaladar2 do createCmd HawalaAccount with owner = hawaladar2; fee = 0.05; observers = users
+
+  let password = "Abracadabra"
+  let amount = 100.0
+
+  l1 <- submit alice do
+    createCmd LockedIou with
+      iou = Iou with issuer = alice; owner = hawaladar1; amount
+      hash = Text.sha256 password
+
+  l2 <- submit hawaladar1 do
+    exerciseCmd l1 ChainWith with next = hawaladar2
+
+  l3 <- submit hawaladar2 do
+    exerciseCmd l2 ChainWith with next = bob
+
+  submit bob do
+    exerciseCmd l3 Unlock with
+      password = password
+
+  h2_reveals <- query @Reveal hawaladar2
+  let (h2_revid, _) = fromSome $ List.head h2_reveals
+  h2_pw <- submit hawaladar2 do
+    exerciseCmd h2_revid GetPassword
+  
+  submit hawaladar2 do
+    exerciseCmd l2 Unlock with
+      password = h2_pw
+
+  h1_reveals <- query @Reveal hawaladar1
+  let (h1_revid, _) = fromSome $ List.head h1_reveals
+  h1_pw <- submit hawaladar1 do
+    exerciseCmd h1_revid GetPassword
+  
+  submit hawaladar1 do
+    exerciseCmd l1 Unlock with
+      password = h1_pw
+
+  alice_reveals <- query @Reveal alice
+  let (alice_revid, _) = fromSome $ List.head alice_reveals
+  alice_pw <- submit alice do
+    exerciseCmd alice_revid GetPassword
+
+  assertMsg "Invalid password retrieved for Alice" (alice_pw == password)
+
+  bob_ious <- query @Iou bob
+  assertMsg "Incorrect number of IOUs created for Bob" (length bob_ious == 1)
+  let (_, bobIou) = fromSome $ List.head bob_ious
+
+  fees <- query @HawalaAccount bob
+  let expectedAmount = amount * foldl (\acc v -> acc * (1.0 - v.fee)) 1.0 (map snd fees)
+  assertMsg "Incorrect value for Bob's IOU" (bobIou.amount == expectedAmount)
+
+  return ()
