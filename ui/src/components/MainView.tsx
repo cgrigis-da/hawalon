@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { Container, Grid, Header, Icon, Segment, Divider } from 'semantic-ui-react';
-import { Party } from '@daml/types';
+import { Party, ContractId } from '@daml/types';
 import { User, Hawala } from '@daml.js/my-app';
 import { publicContext, userContext } from './App';
 import UserList from './UserList';
@@ -11,6 +11,7 @@ import PartyListEdit from './PartyListEdit';
 import LockedIouList from './LockedIouList';
 import IouList from './IouList';
 import TransferProposalList from './TransferProposalList';
+import { LockedIou } from '@daml.js/my-app/lib/Hawala';
 
 // USERS_BEGIN
 const MainView: React.FC = () => {
@@ -57,9 +58,9 @@ const MainView: React.FC = () => {
   );
 
   // Locked IOUs
-  const lockedIous = useMemo(() =>
+  const lockedIous: [ContractId<Hawala.LockedIou>, Hawala.LockedIou][] = useMemo(() =>
     allLockedIous
-    .map(l => l.payload),
+    .map(l => [l.contractId, l.payload] as [ContractId<Hawala.LockedIou>, Hawala.LockedIou]),
     [allLockedIous]
   );
 
@@ -76,6 +77,17 @@ const MainView: React.FC = () => {
     }
   }
   // FOLLOW_END
+
+  const unlock = async (cid: ContractId<LockedIou>): Promise<boolean> => {
+    try {
+      const password: string = prompt("Please enter password") || "";
+      await ledger.exercise(Hawala.LockedIou.Unlock, cid, {password});
+      return true;
+    } catch (error) {
+      alert(`Unknown error:\n${JSON.stringify(error)}`);
+      return false;
+    }
+  }
 
   const redeem = async (iou: Hawala.Iou): Promise<boolean> => {
     return true;
@@ -134,7 +146,7 @@ const MainView: React.FC = () => {
                 lockedIous={lockedIous}
                 partyToAlias={partyToAlias}
                 username={username}
-                onFollow={follow}
+                onUnlock={unlock}
               />
             </Segment>
           </Grid.Column>
