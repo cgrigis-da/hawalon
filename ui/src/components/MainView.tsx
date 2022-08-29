@@ -10,6 +10,7 @@ import UserList from './UserList';
 import PartyListEdit from './PartyListEdit';
 import LockedIouList from './LockedIouList';
 import IouList from './IouList';
+import TransferProposalList from './TransferProposalList';
 
 // USERS_BEGIN
 const MainView: React.FC = () => {
@@ -21,6 +22,7 @@ const MainView: React.FC = () => {
 
   const allIous = userContext.useStreamQueries(Hawala.Iou).contracts;
   const allLockedIous = userContext.useStreamQueries(Hawala.LockedIou).contracts;
+  const allTransferProposals = userContext.useStreamQueries(Hawala.TransferProposal).contracts;
 // USERS_END
 
   // Sorted list of users that are following the current user
@@ -43,20 +45,21 @@ const MainView: React.FC = () => {
     allIous
     .map(iou => iou.payload)
     .filter(iou => iou.owner === username),
-    [allIous]
+    [allIous, username]
+  );
+
+  // Transfer proposals
+  const transferProposals = useMemo(() =>
+    allTransferProposals
+    .map(tp => tp.payload)
+    .filter(tp=> tp.intermediary === username),
+    [allTransferProposals, username]
   );
 
   // Locked IOUs
-  const incomingLockedIous = useMemo(() =>
+  const lockedIous = useMemo(() =>
     allLockedIous
-    .map(l => l.payload)
-    .filter(l => l.iou.owner === username),
-    [allLockedIous]
-  );
-  const outgoingLockedIous = useMemo(() =>
-    allLockedIous
-    .map(l => l.payload)
-    .filter(l => l.iou.issuer === username),
+    .map(l => l.payload),
     [allLockedIous]
   );
 
@@ -91,7 +94,7 @@ const MainView: React.FC = () => {
               <Header as='h2'>
               <Icon name='money bill alternate' />
                 <Header.Content>
-                  {myUserName ?? 'Loading...'}
+                  {myUserName ? 'Assets' : 'Loading...'}
                   <Header.Subheader>My IOUs</Header.Subheader>
                 </Header.Content>
               </Header>
@@ -107,30 +110,30 @@ const MainView: React.FC = () => {
                 <Icon name='long arrow alternate right' />
                 <Header.Content>
                   Incoming
-                  <Header.Subheader>The transfers that are proposed to me</Header.Subheader>
+                  <Header.Subheader>Transfers proposed to me</Header.Subheader>
                 </Header.Content>
               </Header>
               <Divider />
-              <LockedIouList
-                lockedIous={incomingLockedIous}
+              <TransferProposalList
+                transferProposals={transferProposals}
                 partyToAlias={partyToAlias}
-                incoming={true}
+                username={username}
                 onFollow={follow}
               />
             </Segment>
             <Segment>
               <Header as='h2'>
-                <Icon name='long arrow alternate left' />
+                <Icon name='exchange' />
                 <Header.Content>
-                  Outgoing
-                  <Header.Subheader>The transfers in which I participate</Header.Subheader>
+                  Pending
+                  <Header.Subheader>Transfers in which I participate</Header.Subheader>
                 </Header.Content>
               </Header>
               <Divider />
               <LockedIouList
-                lockedIous={outgoingLockedIous}
+                lockedIous={lockedIous}
                 partyToAlias={partyToAlias}
-                incoming={false}
+                username={username}
                 onFollow={follow}
               />
             </Segment>

@@ -7,7 +7,7 @@ import { Party } from '@daml/types';
 import { User, Hawala } from '@daml.js/my-app';
 
 type Props = {
-  lockedIous: Hawala.LockedIou[];
+  transferProposals: Hawala.TransferProposal[];
   partyToAlias: Map<Party, string>;
   username: string;
   onFollow: (userToFollow: Party) => void;
@@ -17,17 +17,18 @@ type Props = {
  * React component to display a list of `User`s.
  * Every party in the list can be added as a friend.
  */
-const LockedIouList: React.FC<Props> = ({lockedIous, partyToAlias, username, onFollow}) => {
+const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, onFollow}) => {
   return (
     <List divided relaxed>
-      {[...lockedIous].map(l =>
-        <List.Item key={l.iou.issuer}>
+      {[...transferProposals].map(tp =>
+        <List.Item key={tp.destination}>
           <List.Content>
-            <List.Header>{
-              l.iou.owner === username
-                ? `from ${partyToAlias.get(l.iou.issuer)}: ${l.iou.amount}`
-                : `to ${partyToAlias.get(l.iou.owner)}: ${l.iou.amount}`
-            }</List.Header>
+            <List.Header>
+              from: {partyToAlias.get(tp.source)};
+              to: {partyToAlias.get(tp.destination)};
+              via: {partyToAlias.get(tp.intermediary)};
+              amount: {tp.amount}
+            </List.Header>
           </List.Content>
         </List.Item>
       )}
@@ -35,4 +36,4 @@ const LockedIouList: React.FC<Props> = ({lockedIous, partyToAlias, username, onF
   );
 };
 
-export default LockedIouList;
+export default TransferProposalList;

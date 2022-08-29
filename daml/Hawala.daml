@@ -45,19 +45,6 @@ template LockedIou with
     signatory iou.issuer
     observer iou.owner
 
-    nonconsuming choice ChainWith: ContractId LockedIou
-      with
-        next: Party
-      controller iou.owner
-      do
-        (fid, f) <- fetchByKey @HawalaAccount iou.owner
-        let newIou = Iou with
-              issuer = iou.owner
-              owner = next
-              amount = iou.amount * (1.0 - f.fee)
-
-        create this with iou = newIou
-
     choice Unlock: ()
       with
         password: Text
@@ -72,6 +59,47 @@ template LockedIou with
           password
 
         return ()
+
+template TransferProposal with
+    source: Party
+    destination: Party
+    intermediary: Party
+    amount: Decimal
+    hash: Text
+  where
+    signatory source
+    observer intermediary, destination
+
+    choice AcceptAndChain: (ContractId TransferProposal, ContractId LockedIou)
+      with
+        next: Party
+      controller intermediary
+      do
+        assertMsg "Intermediary cannot be destination" (intermediary /= destination)
+
+        (_, account) <- fetchByKey @HawalaAccount intermediary
+
+        p <- create this with
+          source = intermediary
+          intermediary = next
+          amount = amount * (1.0 - account.fee)
+
+        l <- create LockedIou with
+          iou = Iou with
+            issuer = source
+            owner = intermediary
+            amount
+          hash
+
+        return (p, l)
+
+    choice Accept: ContractId LockedIou
+      controller intermediary
+      do
+        assertMsg "Intermediary must be destination" (intermediary == destination)
+        create LockedIou with
+          iou = Iou with issuer = source; owner = intermediary; amount
+          hash
 
 template Reveal with
     owner: Party
@@ -131,16 +159,29 @@ test_2 = script do
   let password = "Abracadabra"
   let amount = 100.0
 
-  l1 <- submit alice do
-    createCmd LockedIou with
-      iou = Iou with issuer = alice; owner = hawaladar1; amount
-      hash = Text.sha256 password
+  p <- submit alice do
+    createCmd TransferProposal with
+      source = alice
+      destination = bob
+      intermediary = hawaladar1
+      amount = 100.0
+      hash = Text.sha256 "Abracadabra"
 
-  l2 <- submit hawaladar1 do
-    exerciseCmd l1 ChainWith with next = hawaladar2
+  -- Hawaladar1 cannot exercise the final accept because he is not the final destination
+  submitMustFail hawaladar1 do
+    exerciseCmd p Accept
 
-  l3 <- submit hawaladar2 do
-    exerciseCmd l2 ChainWith with next = bob
+  (p, l1) <- submit hawaladar1 do
+    exerciseCmd p AcceptAndChain with next = hawaladar2
+  (p, l2) <- submit hawaladar2 do
+    exerciseCmd p AcceptAndChain with next = bob
+
+  -- Bob cannot accept and chain because he is the final destination
+  submitMustFail bob do
+    exerciseCmd p AcceptAndChain with next = bob
+
+  l3 <- submit bob do
+    exerciseCmd p Accept
 
   submit bob do
     exerciseCmd l3 Unlock with
