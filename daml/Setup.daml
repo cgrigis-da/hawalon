@@ -44,6 +44,7 @@ setup = do
       intermediary = users List.!! 3
       amount = 100.0
       hash = T.sha256 "Abracadabra"
+      link = None
 
   return ()
   --forA_ aliases $ \alias -> createTestUser $ TestUser alias public

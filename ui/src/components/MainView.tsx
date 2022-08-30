@@ -26,6 +26,7 @@ const MainView: React.FC = () => {
   const allIous = userContext.useStreamQueries(Hawala.Iou).contracts;
   const allLockedIous = userContext.useStreamQueries(Hawala.LockedIou).contracts;
   const allTransferProposals = userContext.useStreamQueries(Hawala.TransferProposal).contracts;
+  const allReveals = userContext.useStreamQueries(Hawala.Reveal).contracts;
 // USERS_END
 
   const users = useMemo(() =>
@@ -46,31 +47,38 @@ const MainView: React.FC = () => {
   // IOUs
   const ious = useMemo(() =>
     allIous
-    .map(iou => iou.payload)
-    .filter(iou => iou.owner === username),
+      .map(iou => iou.payload)
+      .filter(iou => iou.owner === username),
     [allIous, username]
   );
 
   // Transfer proposals
   const transferProposalsToForward: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
-    .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
-    .filter(tp => (tp[1].intermediary === username && tp[1].destination !== username)),
+      .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
+      .filter(tp => (tp[1].intermediary === username && tp[1].destination !== username)),
     [allTransferProposals, username]
   );
 
   const transferProposalsForMe: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
-    .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
-    .filter(tp => (tp[1].intermediary === username && tp[1].destination === username)),
+      .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
+      .filter(tp => (tp[1].intermediary === username && tp[1].destination === username)),
     [allTransferProposals, username]
   );
 
   // Locked IOUs
   const lockedIous: [ContractId<Hawala.LockedIou>, Hawala.LockedIou][] = useMemo(() =>
     allLockedIous
-    .map(l => [l.contractId, l.payload] as [ContractId<Hawala.LockedIou>, Hawala.LockedIou]),
+      .map(l => [l.contractId, l.payload] as [ContractId<Hawala.LockedIou>, Hawala.LockedIou]),
     [allLockedIous]
+  );
+
+  const lockedIouToPw = useMemo(() =>
+    new Map<ContractId<Hawala.LockedIou>, string>(
+      allReveals
+        .map(({ payload }) => [payload.cid, payload.password])),
+    [allReveals]
   );
 
   // FOLLOW_BEGIN
@@ -190,6 +198,7 @@ const MainView: React.FC = () => {
               <Divider />
               <LockedIouList
                 lockedIous={lockedIous}
+                lockedIouToPw={lockedIouToPw}
                 partyToAlias={partyToAlias}
                 username={username}
                 onUnlock={unlock}

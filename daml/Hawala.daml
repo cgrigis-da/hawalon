@@ -41,6 +41,7 @@ template Iou with
 template LockedIou with
     iou: Iou
     hash: Text
+    link: Optional (ContractId LockedIou)
   where
     signatory iou.issuer
     observer iou.owner
@@ -54,9 +55,12 @@ template LockedIou with
 
         create iou
 
-        create Reveal with
-          owner = iou.issuer
-          password
+        whenSome link $ \cid -> do
+          create Reveal with
+            owner = iou.issuer
+            cid
+            password
+          return ()
 
         return ()
 
@@ -67,6 +71,7 @@ template TransferProposal with
     intermediary: Party
     amount: Decimal
     hash: Text
+    link: Optional (ContractId LockedIou)
   where
     signatory source
     observer origin, intermediary, destination
@@ -80,17 +85,19 @@ template TransferProposal with
 
         (_, account) <- fetchByKey @HawalaAccount intermediary
 
-        p <- create this with
-          source = intermediary
-          intermediary = next
-          amount = amount * (1.0 - account.fee)
-
         l <- create LockedIou with
           iou = Iou with
             issuer = source
             owner = intermediary
             amount
           hash
+          link
+
+        p <- create this with
+          source = intermediary
+          intermediary = next
+          amount = amount * (1.0 - account.fee)
+          link = Some l
 
         return (p, l)
 
@@ -101,17 +108,19 @@ template TransferProposal with
         create LockedIou with
           iou = Iou with issuer = source; owner = intermediary; amount
           hash
+          link
 
 template Reveal with
     owner: Party
     password: Text
+    cid: ContractId LockedIou
   where
     signatory owner
 
-    choice GetPassword: Text
+    choice GetPassword: (ContractId LockedIou, Text)
       controller owner
       do
-        return password
+        return (cid, password)
 
 test_simple_unlock = script do
   alice <- allocateParty "Alice"
@@ -125,6 +134,7 @@ test_simple_unlock = script do
     createCmd LockedIou with
       iou = Iou with issuer = alice; owner = bob; amount = 100.0
       hash = hash
+      link = None
 
   -- Alice can't unlock with an incorrect password
   submitMustFail alice do
@@ -168,6 +178,7 @@ test_2 = script do
       intermediary = hawaladar1
       amount = 100.0
       hash = Text.sha256 "Abracadabra"
+      link = None
 
   -- Hawaladar1 cannot exercise the final accept because he is not the final destination
   submitMustFail hawaladar1 do
@@ -191,28 +202,23 @@ test_2 = script do
 
   h2_reveals <- query @Reveal hawaladar2
   let (h2_revid, _) = fromSome $ List.head h2_reveals
-  h2_pw <- submit hawaladar2 do
+  (cid, h2_pw) <- submit hawaladar2 do
     exerciseCmd h2_revid GetPassword
   
+  assertMsg "Incorrect LockedIou CID" (cid == l2)
   submit hawaladar2 do
     exerciseCmd l2 Unlock with
       password = h2_pw
 
   h1_reveals <- query @Reveal hawaladar1
   let (h1_revid, _) = fromSome $ List.head h1_reveals
-  h1_pw <- submit hawaladar1 do
+  (cid, h1_pw) <- submit hawaladar1 do
     exerciseCmd h1_revid GetPassword
   
+  assertMsg "Incorrect LockedIou CID" (cid == l1)
   submit hawaladar1 do
     exerciseCmd l1 Unlock with
       password = h1_pw
-
-  alice_reveals <- query @Reveal alice
-  let (alice_revid, _) = fromSome $ List.head alice_reveals
-  alice_pw <- submit alice do
-    exerciseCmd alice_revid GetPassword
-
-  assertMsg "Invalid password retrieved for Alice" (alice_pw == password)
 
   bob_ious <- query @Iou bob
   assertMsg "Incorrect number of IOUs created for Bob" (length bob_ious == 1)

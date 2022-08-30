@@ -8,6 +8,7 @@ import { User, Hawala } from '@daml.js/my-app';
 
 type Props = {
   lockedIous: [ContractId<Hawala.LockedIou>, Hawala.LockedIou][];
+  lockedIouToPw: Map<ContractId<Hawala.LockedIou>, string>;
   partyToAlias: Map<Party, string>;
   username: string;
   onUnlock: (cid: ContractId<Hawala.LockedIou>) => void;
@@ -17,7 +18,7 @@ type Props = {
  * React component to display a list of `User`s.
  * Every party in the list can be added as a friend.
  */
-const LockedIouList: React.FC<Props> = ({lockedIous, partyToAlias, username, onUnlock}) => {
+const LockedIouList: React.FC<Props> = ({lockedIous, lockedIouToPw, partyToAlias, username, onUnlock}) => {
   const renderLockedIou = (liou: [ContractId<Hawala.LockedIou>, Hawala.LockedIou]) => {
     const [cid, l] = liou;
 
@@ -27,6 +28,7 @@ const LockedIouList: React.FC<Props> = ({lockedIous, partyToAlias, username, onU
           <List.Header>
             from {partyToAlias.get(l.iou.issuer)}: {l.iou.amount}
           </List.Header>
+            password: {lockedIouToPw.get(cid) ?? "UNKNOWN"}
           <List.Content floated='right'>
             <Icon
               name='key'
