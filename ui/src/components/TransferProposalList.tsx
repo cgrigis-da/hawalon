@@ -10,7 +10,7 @@ type Props = {
   transferProposals: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][];
   partyToAlias: Map<Party, string>;
   username: string;
-  users: Hawala.HawalaAccount[];
+  users: User.Alias[];
   onChain: (cid: ContractId<Hawala.TransferProposal>, party: string) => Promise<boolean>;
 }
 
@@ -21,13 +21,13 @@ type Props = {
 const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, users, onChain}) => {
   const [next, setNext] = React.useState<[ContractId<Hawala.TransferProposal>, string] | undefined>(undefined);
 
-  const userToOption = (user: Hawala.HawalaAccount) => {
+  const userToOption = (user: User.Alias) => {
     return {
-      key: user.owner,
-      text: partyToAlias.get(user.owner) ?? user.owner,
-      value: user.owner};
+      key: user.username,
+      text: user.alias,
+      value: user.username};
   }
-  const options = [...users].map((user: Hawala.HawalaAccount) => userToOption(user));
+  const options = [...users].map((user: User.Alias) => userToOption(user));
 
   const onSubmit = async (event?: React.FormEvent) => {
     if (next === undefined) return;

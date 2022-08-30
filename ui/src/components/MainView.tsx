@@ -28,23 +28,13 @@ const MainView: React.FC = () => {
   const allTransferProposals = userContext.useStreamQueries(Hawala.TransferProposal).contracts;
 // USERS_END
 
-  // Sorted list of users that are following the current user
-  const followers = useMemo(() =>
-    allUsers
-    .map(user => user.payload)
-    .filter(user => user.username !== username)
-    .sort((x, y) => x.username.localeCompare(y.username)),
-    [allUsers, username]);
-
-
   const users = useMemo(() =>
-    allHawalaAccounts
-      .map(user => user.payload)
-      .filter(user => user.owner !== username)
-      .sort((x, y) => x.owner.localeCompare(y.owner)),
-    [allHawalaAccounts, username]);
-
-  console.log(users);
+    aliases.contracts
+      .map(alias => alias.payload)
+      .filter(alias => alias.username !== username)
+      .sort((x, y) => x.alias.localeCompare(y.alias)),
+      [aliases, username]
+  );
 
   // Map to translate party identifiers to aliases.
   const partyToAlias = useMemo(() =>
