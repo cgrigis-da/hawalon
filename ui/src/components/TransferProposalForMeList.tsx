@@ -24,8 +24,8 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
         <List.Item key={tp[1].destination}>
           <List.Content>
             <List.Header>
+              origin: {partyToAlias.get(tp[1].origin)};
               from: {partyToAlias.get(tp[1].source)};
-              intermediary: {partyToAlias.get(tp[1].intermediary)};
               amount: {tp[1].amount}
             </List.Header>
 

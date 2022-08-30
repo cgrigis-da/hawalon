@@ -61,6 +61,7 @@ template LockedIou with
         return ()
 
 template TransferProposal with
+    origin: Party
     source: Party
     destination: Party
     intermediary: Party
@@ -68,7 +69,7 @@ template TransferProposal with
     hash: Text
   where
     signatory source
-    observer intermediary, destination
+    observer origin, intermediary, destination
 
     choice AcceptAndChain: (ContractId TransferProposal, ContractId LockedIou)
       with
@@ -161,6 +162,7 @@ test_2 = script do
 
   p <- submit alice do
     createCmd TransferProposal with
+      origin = alice
       source = alice
       destination = bob
       intermediary = hawaladar1

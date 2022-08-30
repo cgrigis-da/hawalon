@@ -30,6 +30,7 @@ setup = do
 
   submit alice do
     createCmd TransferProposal with
+      origin = alice
       source = alice
       destination = bob
       intermediary = users List.!! 3
