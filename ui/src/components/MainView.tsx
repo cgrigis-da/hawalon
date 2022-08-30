@@ -11,6 +11,7 @@ import PartyListEdit from './PartyListEdit';
 import LockedIouList from './LockedIouList';
 import IouList from './IouList';
 import TransferProposalList from './TransferProposalList';
+import TransferProposalForMeList from './TransferProposalForMeList';
 import { LockedIou } from '@daml.js/my-app/lib/Hawala';
 
 // USERS_BEGIN
@@ -20,6 +21,7 @@ const MainView: React.FC = () => {
   const aliases = publicContext.useStreamQueries(User.Alias, () => [], []);
   const myUser = myUserResult.contracts[0]?.payload;
   const allUsers = userContext.useStreamQueries(User.User).contracts;
+  const allHawalaAccounts = userContext.useStreamQueries(Hawala.HawalaAccount).contracts;
 
   const allIous = userContext.useStreamQueries(Hawala.Iou).contracts;
   const allLockedIous = userContext.useStreamQueries(Hawala.LockedIou).contracts;
@@ -33,6 +35,16 @@ const MainView: React.FC = () => {
     .filter(user => user.username !== username)
     .sort((x, y) => x.username.localeCompare(y.username)),
     [allUsers, username]);
+
+
+  const users = useMemo(() =>
+    allHawalaAccounts
+      .map(user => user.payload)
+      .filter(user => user.owner !== username)
+      .sort((x, y) => x.owner.localeCompare(y.owner)),
+    [allHawalaAccounts, username]);
+
+  console.log(users);
 
   // Map to translate party identifiers to aliases.
   const partyToAlias = useMemo(() =>
@@ -50,10 +62,17 @@ const MainView: React.FC = () => {
   );
 
   // Transfer proposals
-  const transferProposals = useMemo(() =>
+  const transferProposalsToForward: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
-    .map(tp => tp.payload)
-    .filter(tp=> tp.intermediary === username),
+    .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
+    .filter(tp => (tp[1].intermediary === username && tp[1].destination !== username)),
+    [allTransferProposals, username]
+  );
+
+  const transferProposalsForMe: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
+    allTransferProposals
+    .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
+    .filter(tp => (tp[1].intermediary === username && tp[1].destination === username)),
     [allTransferProposals, username]
   );
 
@@ -82,6 +101,26 @@ const MainView: React.FC = () => {
     try {
       const password: string = prompt("Please enter password") || "";
       await ledger.exercise(Hawala.LockedIou.Unlock, cid, {password});
+      return true;
+    } catch (error) {
+      alert(`Unknown error:\n${JSON.stringify(error)}`);
+      return false;
+    }
+  }
+
+  const chain = async (cid: ContractId<Hawala.TransferProposal>, party: string): Promise<boolean> => {
+    try {
+      await ledger.exercise(Hawala.TransferProposal.AcceptAndChain, cid, {next: party});
+      return true;
+    } catch (error) {
+      alert(`Unknown error:\n${JSON.stringify(error)}`);
+      return false;
+    }
+  }
+
+  const accept = async (cid: ContractId<Hawala.TransferProposal>): Promise<boolean> => {
+    try {
+      await ledger.exercise(Hawala.TransferProposal.Accept, cid, {});
       return true;
     } catch (error) {
       alert(`Unknown error:\n${JSON.stringify(error)}`);
@@ -122,15 +161,32 @@ const MainView: React.FC = () => {
                 <Icon name='long arrow alternate right' />
                 <Header.Content>
                   Incoming
+                  <Header.Subheader>Transfers for me</Header.Subheader>
+                </Header.Content>
+              </Header>
+              <Divider />
+              <TransferProposalForMeList
+                transferProposals={transferProposalsForMe}
+                partyToAlias={partyToAlias}
+                username={username}
+                onAccept={accept}
+              />
+            </Segment>
+            <Segment>
+              <Header as='h2'>
+                <Icon name='long arrow alternate right' />
+                <Header.Content>
+                  Incoming
                   <Header.Subheader>Transfers proposed to me</Header.Subheader>
                 </Header.Content>
               </Header>
               <Divider />
               <TransferProposalList
-                transferProposals={transferProposals}
+                transferProposals={transferProposalsToForward}
                 partyToAlias={partyToAlias}
                 username={username}
-                onFollow={follow}
+                users={users}
+                onChain={chain}
               />
             </Segment>
             <Segment>

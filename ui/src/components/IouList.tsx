@@ -19,8 +19,8 @@ type Props = {
 const LockedIouList: React.FC<Props> = ({ious, partyToAlias, onRedeem}) => {
   return (
     <List divided relaxed>
-      {[...ious].map(iou =>
-        <List.Item key={iou.issuer}>
+      {[...ious].map((iou, index) =>
+        <List.Item key={index}>
           <List.Content>
             <List.Header>{`from ${partyToAlias.get(iou.issuer)}: ${iou.amount}`}</List.Header>
           </List.Content>

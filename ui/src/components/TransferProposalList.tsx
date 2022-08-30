@@ -2,33 +2,66 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Icon, List } from 'semantic-ui-react'
-import { Party } from '@daml/types';
+import { Icon, List, Form, Button } from 'semantic-ui-react'
+import { Party, ContractId } from '@daml/types';
 import { User, Hawala } from '@daml.js/my-app';
 
 type Props = {
-  transferProposals: Hawala.TransferProposal[];
+  transferProposals: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][];
   partyToAlias: Map<Party, string>;
   username: string;
-  onFollow: (userToFollow: Party) => void;
+  users: Hawala.HawalaAccount[];
+  onChain: (cid: ContractId<Hawala.TransferProposal>, party: string) => Promise<boolean>;
 }
 
 /**
  * React component to display a list of `User`s.
  * Every party in the list can be added as a friend.
  */
-const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, onFollow}) => {
+const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, users, onChain}) => {
+  const [next, setNext] = React.useState<[ContractId<Hawala.TransferProposal>, string] | undefined>(undefined);
+
+  const userToOption = (user: Hawala.HawalaAccount) => {
+    return {
+      key: user.owner,
+      text: partyToAlias.get(user.owner) ?? user.owner,
+      value: user.owner};
+  }
+  const options = [...users].map((user: Hawala.HawalaAccount) => userToOption(user));
+
+  const onSubmit = async (event?: React.FormEvent) => {
+    if (next === undefined) return;
+
+    await onChain(next[0], next[1]);
+  }
+
   return (
     <List divided relaxed>
       {[...transferProposals].map(tp =>
-        <List.Item key={tp.destination}>
+        <List.Item key={tp[1].destination}>
           <List.Content>
             <List.Header>
-              from: {partyToAlias.get(tp.source)};
-              to: {partyToAlias.get(tp.destination)};
-              via: {partyToAlias.get(tp.intermediary)};
-              amount: {tp.amount}
+              from: {partyToAlias.get(tp[1].source)};
+              to: {partyToAlias.get(tp[1].destination)};
+              amount: {tp[1].amount}
             </List.Header>
+
+            <Form onSubmit={onSubmit}>
+              <Form.Select
+                fluid
+                search
+                allowAdditions
+                additionLabel="Insert a party identifier: "
+                additionPosition="bottom"
+                className="test-select-follow-input"
+                value={next ? next[1] : ""}
+                options={options}
+                onChange={(event, { value }) => setNext([tp[0], value?.toString() ?? ""])}
+              />
+              <Button type="submit" className="test-select-forward-button">
+                Forward
+              </Button>
+            </Form>
           </List.Content>
         </List.Item>
       )}

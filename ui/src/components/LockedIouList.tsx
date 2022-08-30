@@ -49,8 +49,8 @@ const LockedIouList: React.FC<Props> = ({lockedIous, partyToAlias, username, onU
 
   return (
     <List divided relaxed>
-      {[...lockedIous].map(l =>
-        <List.Item key={(l[1] as Hawala.LockedIou).iou.issuer}>
+      {[...lockedIous].map((l, index) =>
+        <List.Item key={index}>
           {renderLockedIou(l)}
         </List.Item>
       )}
