@@ -1,0 +1,47 @@
+module HawalarBot where
+
+import qualified Daml.Trigger as T
+import qualified Hawala
+import DA.Foldable (forA_)
+
+noOp : T.Trigger ()
+noOp = T.Trigger with
+  initialize = pure ()
+  updateState = \_ -> pure ()
+  rule = \_ -> do
+    debug "triggered"
+    pure ()
+  registeredTemplates = T.AllInDar
+  heartbeat = None
+
+autoForward: T.Trigger ()
+autoForward = T.Trigger with
+  initialize = pure ()
+  updateState = \_ -> pure ()
+  rule = \p -> do
+    -- Retrieve all transfer proposals
+    transfer_proposals <- T.query @Hawala.TransferProposal
+
+    -- Keep only the ones I must forward
+    let my_tps = filter (\(cid, tp) -> (tp.intermediary == p) && (tp.destination /= p)) transfer_proposals
+    debug $ "Transfer Proposals: " <> show my_tps
+
+    forA_ my_tps $ \(cid, tp) -> do
+      -- Forward to destination
+      T.dedupExercise cid (Hawala.AcceptAndChain tp.destination)
+      debug $ "Handled TP: " <> show tp
+
+    -- Retrieve all revealed passwords
+    reveals <- T.query @Hawala.Reveal
+
+    -- Keep only the ones for me
+    let my_pws = filter (\(cid, pw) -> (pw.owner == p)) reveals
+    debug $ "Password reveals: " <> show my_pws
+
+    forA_ my_pws $ \(cid, pw) -> do
+      T.emitCommands [T.exerciseCmd cid Hawala.GetPassword] [T.toAnyContractId cid]
+      T.dedupExercise pw.cid (Hawala.Unlock pw.password)
+      debug $ "Unlocked: " <> show pw.cid
+
+  registeredTemplates = T.AllInDar
+  heartbeat = None
