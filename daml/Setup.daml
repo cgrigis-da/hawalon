@@ -28,27 +28,6 @@ setup = do
   forA_ (zip users fees) $ \(user, fee) -> submit user do
     createCmd HawalaAccount with owner = user; fee; observers = users
 
-  let alice = List.head users
-  let bob = users List.!! 1
-
---  submit alice do
---    createCmd LockedIou with
---      iou = Iou with issuer = alice; owner = users List.!! 3; amount = 123.45
---      hash = T.sha256 "Abracadabra"
-
-  submit alice do
-    createCmd TransferProposal with
-      origin = alice
-      source = alice
-      destination = bob
-      intermediary = users List.!! 3
-      amount = 100.0
-      hash = T.sha256 "Abracadabra"
-      link = None
-
-  return ()
-  --forA_ aliases $ \alias -> createTestUser $ TestUser alias public
-
 -- | Create a test user.
 createTestUser : TestUser -> Script Party
 createTestUser TestUser{alias, public} = do

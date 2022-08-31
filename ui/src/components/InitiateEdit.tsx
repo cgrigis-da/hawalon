@@ -46,6 +46,7 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
       setIntermediary("");
       setAmount("");
       setPassword("");
+      // alert("Transfer initiated successfully");
       setOpenConfirm(true);
     };
 
@@ -54,7 +55,7 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
 
   return (
     <List.Content>
-      <Form success={openConfirm} onSubmit={onSubmit}>
+      <Form onSubmit={onSubmit}>
         <Label>Destination</Label>
         <Form.Select
           fluid
@@ -77,7 +78,7 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
 
         <Form.Input
           label='Password'
-          type='string'
+          type='password'
           value={password}
           onChange={(event, { value }) => setPassword(value?.toString() ?? "")}
         />
@@ -109,7 +110,7 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
       >
         <Header icon>
           <Icon name='money' />
-            Transfer initiated successfully
+          Transfer initiated successfully
         </Header>
         <Modal.Actions>
           <Button basic color='green' onClick={() => setOpenConfirm(false)}>
