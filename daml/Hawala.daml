@@ -76,6 +76,9 @@ template TransferProposal with
     signatory source
     observer origin, intermediary, destination
 
+    -- FIXME: use a path: [Party] + destination
+    ensure (origin /= destination) && (origin /= intermediary) && (source /= destination) && (source /= intermediary)
+
     choice AcceptAndChain: (ContractId TransferProposal, ContractId LockedIou)
       with
         next: Party
@@ -156,7 +159,7 @@ test_simple_unlock = script do
     exerciseCmd lockedIou Unlock with
       password = password
 
-test_2 = script do
+test_full_transfer = script do
   alice <- allocateParty "Alice"
   bob <- allocateParty "Bob"
   hawaladar1 <- allocateParty "Hawaladar 1"

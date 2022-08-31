@@ -28,11 +28,14 @@ const LockedIouList: React.FC<Props> = ({lockedIous, lockedIouToPw, partyToAlias
           <List.Header>
             from {partyToAlias.get(l.iou.issuer)}: {l.iou.amount}
           </List.Header>
+          <List.Header>
             password: {lockedIouToPw.get(cid) ?? "UNKNOWN"}
+          </List.Header>
           <List.Content floated='right'>
             <Icon
               name='key'
               link
+              size='large'
               className='test-select-unlock-iou-icon'
               onClick={() => onUnlock(cid)} />
           </List.Content>

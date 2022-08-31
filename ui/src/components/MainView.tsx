@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { Container, Grid, Header, Icon, Segment, Divider } from 'semantic-ui-react';
-import { Party, ContractId } from '@daml/types';
+import { Party, ContractId, Decimal } from '@daml/types';
 import { User, Hawala } from '@daml.js/my-app';
 import { publicContext, userContext } from './App';
 import UserList from './UserList';
@@ -13,6 +13,7 @@ import IouList from './IouList';
 import TransferProposalList from './TransferProposalList';
 import TransferProposalForMeList from './TransferProposalForMeList';
 import { LockedIou } from '@daml.js/my-app/lib/Hawala';
+import InitiateEdit from './InitiateEdit';
 
 // USERS_BEGIN
 const MainView: React.FC = () => {
@@ -126,6 +127,18 @@ const MainView: React.FC = () => {
     }
   }
 
+  const initiate = async (origin: string, source: string, destination: string, intermediary: string,
+    amount: Decimal, hash: string): Promise<boolean> => {
+    try {
+      await ledger.create(Hawala.TransferProposal,
+        {origin, source, destination, intermediary, amount, hash, link: null});
+      return true;
+    } catch (error) {
+      alert(`Unknown error:\n${JSON.stringify(error)}`);
+      return false;
+    }
+  }
+
   const redeem = async (iou: Hawala.Iou): Promise<boolean> => {
     return true;
   }
@@ -141,7 +154,24 @@ const MainView: React.FC = () => {
 
             <Segment>
               <Header as='h2'>
-              <Icon name='money bill alternate' />
+                <Icon name='send' />
+                <Header.Content>
+                  Initiate
+                  <Header.Subheader>Send assets to another user</Header.Subheader>
+                </Header.Content>
+              </Header>
+              <Divider />
+              <InitiateEdit
+                users={users}
+                partyToAlias={partyToAlias}
+                username={username}
+                onInitiate={initiate}
+              />
+            </Segment>
+
+            <Segment>
+              <Header as='h2'>
+                <Icon name='money bill alternate' />
                 <Header.Content>
                   {myUserName ? 'Assets' : 'Loading...'}
                   <Header.Subheader>My IOUs</Header.Subheader>
@@ -154,9 +184,10 @@ const MainView: React.FC = () => {
                 onRedeem={redeem}
               />
             </Segment>
+
             <Segment>
               <Header as='h2'>
-                <Icon name='long arrow alternate right' />
+                <Icon name='sign-in' />
                 <Header.Content>
                   Incoming
                   <Header.Subheader>Transfers for me</Header.Subheader>
@@ -170,12 +201,13 @@ const MainView: React.FC = () => {
                 onAccept={accept}
               />
             </Segment>
+
             <Segment>
               <Header as='h2'>
-                <Icon name='long arrow alternate right' />
+                <Icon name='retweet' />
                 <Header.Content>
-                  Incoming
-                  <Header.Subheader>Transfers proposed to me</Header.Subheader>
+                  Intermediary
+                  <Header.Subheader>Forwarding requests</Header.Subheader>
                 </Header.Content>
               </Header>
               <Divider />
@@ -187,11 +219,12 @@ const MainView: React.FC = () => {
                 onChain={chain}
               />
             </Segment>
+
             <Segment>
               <Header as='h2'>
                 <Icon name='exchange' />
                 <Header.Content>
-                  Pending
+                  In progress
                   <Header.Subheader>Transfers in which I participate</Header.Subheader>
                 </Header.Content>
               </Header>
