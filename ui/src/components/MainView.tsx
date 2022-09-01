@@ -139,7 +139,7 @@ const MainView: React.FC = () => {
         <Grid.Row stretched>
           <Grid.Column>
             <Header as='h1' size='huge' color='blue' textAlign='center' style={{padding: '1ex 0em 0ex 0em'}}>
-                {myUserName ? `Welcome, ${myUserName}!` : 'Loading...'}
+                Welcome to Hawalon!
             </Header>
 
             <Segment>
