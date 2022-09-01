@@ -1,9 +1,9 @@
 {
-  "name": "my-app",
+  "name": "hawalon",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@daml.js/my-app": "file:daml.js/my-app-0.1.0",
+    "@daml.js/hawalon": "file:daml.js/hawalon-0.1.0",
     "@daml/hub-react": "^1.0.0",
     "@daml/ledger": "2.3.2",
     "@daml/react": "2.3.2",

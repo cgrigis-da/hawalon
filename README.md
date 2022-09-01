@@ -1,14 +1,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/digital-asset/daml/blob/main/LICENSE)
 
-# my-app
+# hawalon
 
-See [documentation] for details.
-
-[documentation]: https://docs.daml.com/getting-started/installation.html
-
-Please ask for help on [the Daml forum] if you encounter any issue!
-
-[the Daml forum]: https://discuss.daml.com
+Hawalon — A modelling of Hawala on Canton.
 
 ## Development Quick Start
 
@@ -56,16 +50,16 @@ To build everything from scratch:
 
 ```bash
 daml build
-daml codegen js .daml/dist/my-app-0.1.0.dar -o ui/daml.js
+daml codegen js .daml/dist/hawalon-0.1.0.dar -o ui/daml.js
 cd ui
 npm install
 npm run-script build
-zip -r ../my-app-ui.zip build
+zip -r ../hawalon-ui.zip build
 ```
 
 Next you need to create a ledger on [Daml Hub], upload the files
-`.daml/dist/my-app-0.1.0.dar` (created by the `daml build` command)
-and `my-app-ui.zip` (created by the `zip` command based on the result
+`.daml/dist/hawalon-0.1.0.dar` (created by the `daml build` command)
+and `hawalon-ui.zip` (created by the `zip` command based on the result
 of `npm run-script build`).
 
 [Daml Hub]: https://hub.daml.com

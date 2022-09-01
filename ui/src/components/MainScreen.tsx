@@ -4,7 +4,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Image, Menu } from 'semantic-ui-react'
 import MainView from './MainView';
-import { User } from '@daml.js/my-app';
+import { User } from '@daml.js/hawalon';
 import { PublicParty } from '../Credentials';
 import { userContext } from './App';
 

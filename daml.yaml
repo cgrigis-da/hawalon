@@ -1,5 +1,5 @@
 sdk-version: 2.3.2
-name: my-app
+name: hawalon
 version: 0.1.0
 source: daml
 dependencies:

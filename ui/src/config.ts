@@ -29,7 +29,7 @@ export const noUserManagement: UserManagement = {
   ({
     "https://daml.com/ledger-api": {
       "ledgerId": ledgerId,
-      "applicationId": 'my-app',
+      "applicationId": 'hawalon',
       "actAs": [loginName]
     }
   }),
@@ -80,7 +80,7 @@ export const authConfig: Authentication = (() => {
     };
     return auth;
   } else {
-    const ledgerId: string = process.env.REACT_APP_LEDGER_ID ?? "my-app-sandbox"
+    const ledgerId: string = process.env.REACT_APP_LEDGER_ID ?? "hawalon-sandbox"
     const auth: Insecure = {
       provider: "none",
       userManagement: userManagement,

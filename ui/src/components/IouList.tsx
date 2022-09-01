@@ -4,7 +4,7 @@
 import React from 'react'
 import { List } from 'semantic-ui-react'
 import { Party } from '@daml/types';
-import { Hawala } from '@daml.js/my-app';
+import { Hawala } from '@daml.js/hawalon';
 
 type Props = {
   ious: Hawala.Iou[];

@@ -4,7 +4,7 @@
 import React from 'react'
 import { Icon, List, Form, Button , Label, Modal, Header} from 'semantic-ui-react'
 import { Party } from '@daml/types';
-import { User } from '@daml.js/my-app';
+import { User } from '@daml.js/hawalon';
 import { sha256 } from 'js-sha256';
 
 type Props = {

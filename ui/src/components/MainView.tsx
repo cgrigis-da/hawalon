@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { Container, Grid, Header, Icon, Segment, Divider } from 'semantic-ui-react';
 import { Party, ContractId, Decimal } from '@daml/types';
-import { User, Hawala } from '@daml.js/my-app';
+import { User, Hawala } from '@daml.js/hawalon';
 import { publicContext, userContext } from './App';
 import LockedIouList from './LockedIouList';
 import IouList from './IouList';
