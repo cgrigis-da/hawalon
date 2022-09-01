@@ -41,10 +41,14 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
         <List.Item key={tp[1].destination}>
           <List.Content>
             <List.Header>
-              origin: {partyToAlias.get(tp[1].origin)};
-              from: {partyToAlias.get(tp[1].source)};
-              to: {partyToAlias.get(tp[1].destination)};
-              amount: {tp[1].amount}
+              Transfer: {partyToAlias.get(tp[1].path[tp[1].path.length - 1])}
+              → {partyToAlias.get(tp[1].destination)}
+            </List.Header>
+            <List.Header>
+              Received from: {partyToAlias.get(tp[1].path[1])}
+            </List.Header>
+            <List.Header>
+              Amount: {tp[1].amount}
             </List.Header>
 
             <Form onSubmit={onSubmit}>

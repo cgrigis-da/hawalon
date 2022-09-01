@@ -3,22 +3,20 @@
 
 import React from 'react'
 import { Icon, List, Form, Button , Label, Modal, Header} from 'semantic-ui-react'
-import { Party } from '@daml/types';
 import { User } from '@daml.js/hawalon';
 import { sha256 } from 'js-sha256';
 
 type Props = {
   users: User.Alias[];
-  partyToAlias: Map<Party, string>;
   username: string;
-  onInitiate: (origin: string, source: string, destination: string, intermediary: string,
+  onInitiate: (origin: string, destination: string, intermediary: string,
     amount: string, hash: string) => Promise<boolean>;
 }
 
 /**
  * React component allowing a user to edit and initiate a transfer
  */
-const InitiateEdit: React.FC<Props> = ({users, partyToAlias, username, onInitiate}) => {
+const InitiateEdit: React.FC<Props> = ({users, username, onInitiate}) => {
   const [destination, setDestination] = React.useState<string>("");
   const [intermediary, setIntermediary] = React.useState<string>("");
   const [amount, setAmount] = React.useState<string>("");
@@ -40,13 +38,12 @@ const InitiateEdit: React.FC<Props> = ({users, partyToAlias, username, onInitiat
 
     setEnabled(false);
     
-    const success = await onInitiate(username, username, destination, intermediary, amount, hash);
+    const success = await onInitiate(username, destination, intermediary, amount, hash);
     if (success) {
       setDestination("");
       setIntermediary("");
       setAmount("");
       setPassword("");
-      // alert("Transfer initiated successfully");
       setOpenConfirm(true);
     };
 

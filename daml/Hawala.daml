@@ -5,7 +5,7 @@ module Hawala where
 
 import Daml.Script
 import qualified DA.Text as Text
-import qualified DA.List.Total as List
+import qualified DA.List as List
 import DA.Optional
 
 template HawalaAccount with
@@ -32,6 +32,8 @@ template Iou with
     amount: Decimal
   where
     signatory issuer, owner
+
+    ensure (amount >= 0.0)
 
     choice Redeem: ()
       controller owner
@@ -65,51 +67,56 @@ template LockedIou with
         return ()
 
 template TransferProposal with
-    origin: Party
-    source: Party
+    path: [Party] -- stored from last to origin
     destination: Party
-    intermediary: Party
     amount: Decimal
     hash: Text
     link: Optional (ContractId LockedIou)
   where
-    signatory source
-    observer origin, intermediary, destination
+    -- 2nd element (the sender)
+    signatory path List.!! 1
+    -- last element (the origin), 1st element (the receiver), the destination
+    observer List.last path, List.head path, destination
 
-    -- FIXME: use a path: [Party] + destination
-    ensure (origin /= destination) && (origin /= intermediary) && (source /= destination) && (source /= intermediary)
+    ensure ((List.length path >= 2) && (List.unique path))
 
     choice AcceptAndForward: (ContractId TransferProposal, ContractId LockedIou)
       with
         next: Party
-      controller intermediary
+      controller List.head path -- receiver
       do
-        assertMsg "Intermediary cannot be destination" (intermediary /= destination)
+        assertMsg "Receiver is already in the chain" (notElem next path)
 
-        (_, account) <- fetchByKey @HawalaAccount intermediary
+        let sender = List.head (List.tail path)
+        let receiver = List.head path
+        assertMsg "Receiver cannot be destination" (receiver /= destination)
+
+        (_, account) <- fetchByKey @HawalaAccount receiver
 
         l <- create LockedIou with
           iou = Iou with
-            issuer = source
-            owner = intermediary
+            issuer = sender
+            owner = receiver
             amount
           hash
           link
 
         p <- create this with
-          source = intermediary
-          intermediary = next
+          path = (next :: path)
           amount = amount * (1.0 - account.fee)
           link = Some l
 
         return (p, l)
 
     choice Accept: ContractId LockedIou
-      controller intermediary
+      controller List.head path -- receiver
       do
-        assertMsg "Intermediary must be destination" (intermediary == destination)
+        let sender = List.head (List.tail path)
+        let receiver = List.head path
+        assertMsg "Receiver must be destination" (receiver == destination)
+
         create LockedIou with
-          iou = Iou with issuer = source; owner = intermediary; amount
+          iou = Iou with issuer = sender; owner = receiver; amount
           hash
           link
 
@@ -175,10 +182,8 @@ test_full_transfer = script do
 
   tp <- submit alice do
     createCmd TransferProposal with
-      origin = alice
-      source = alice
+      path = [hawaladar1, alice]
       destination = bob
-      intermediary = hawaladar1
       amount = 100.0
       hash = Text.sha256 "Abracadabra"
       link = None
@@ -204,7 +209,7 @@ test_full_transfer = script do
       password = password
 
   h2_reveals <- query @Reveal hawaladar2
-  let (h2_revid, _) = fromSome $ List.head h2_reveals
+  let (h2_revid, _) = List.head h2_reveals
   (cid, h2_pw) <- submit hawaladar2 do
     exerciseCmd h2_revid GetPassword
   
@@ -214,7 +219,7 @@ test_full_transfer = script do
       password = h2_pw
 
   h1_reveals <- query @Reveal hawaladar1
-  let (h1_revid, _) = fromSome $ List.head h1_reveals
+  let (h1_revid, _) = List.head h1_reveals
   (cid, h1_pw) <- submit hawaladar1 do
     exerciseCmd h1_revid GetPassword
   
@@ -225,7 +230,7 @@ test_full_transfer = script do
 
   bob_ious <- query @Iou bob
   assertMsg "Incorrect number of IOUs created for Bob" (length bob_ious == 1)
-  let (_, bobIou) = fromSome $ List.head bob_ious
+  let (_, bobIou) = List.head bob_ious
 
   fees <- query @HawalaAccount bob
   let expectedAmount = amount * foldl (\acc v -> acc * (1.0 - v.fee)) 1.0 (map snd fees)

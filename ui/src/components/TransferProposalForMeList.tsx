@@ -22,10 +22,14 @@ const TransferProposalForMeList: React.FC<Props> = ({transferProposals, partyToA
       {[...transferProposals].map(tp =>
         <List.Item key={tp[1].destination}>
           <List.Content>
+          <List.Header>
+              Transfer originating from: {partyToAlias.get(tp[1].path[tp[1].path.length - 1])}
+            </List.Header>
             <List.Header>
-              origin: {partyToAlias.get(tp[1].origin)};
-              from: {partyToAlias.get(tp[1].source)};
-              amount: {tp[1].amount}
+              Received from: {partyToAlias.get(tp[1].path[1])}
+            </List.Header>
+            <List.Header>
+              Amount: {tp[1].amount}
             </List.Header>
 
               <Button type="submit" className="test-select-accept-button" onClick={() => onAccept(tp[0])}>

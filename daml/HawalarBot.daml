@@ -1,6 +1,7 @@
 module HawalarBot where
 
 import qualified Daml.Trigger as T
+import qualified DA.List as L
 import qualified Hawala
 import DA.Foldable (forA_)
 
@@ -13,7 +14,7 @@ autoForward = T.Trigger with
     transfer_proposals <- T.query @Hawala.TransferProposal
 
     -- Keep only the ones I must forward
-    let my_tps = filter (\(cid, tp) -> (tp.intermediary == p) && (tp.destination /= p)) transfer_proposals
+    let my_tps = filter (\(cid, tp) -> ((L.head tp.path) == p) && (tp.destination /= p)) transfer_proposals
     debug $ "Transfer Proposals: " <> show my_tps
 
     forA_ my_tps $ \(cid, tp) -> do

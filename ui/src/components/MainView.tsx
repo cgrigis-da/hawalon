@@ -51,7 +51,7 @@ const MainView: React.FC = () => {
   const transferProposalsToForward: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
       .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
-      .filter(tp => (tp[1].intermediary === username && tp[1].destination !== username)),
+      .filter(tp => (tp[1].path[0] === username && tp[1].destination !== username)),
     [allTransferProposals, username]
   );
 
@@ -59,7 +59,7 @@ const MainView: React.FC = () => {
   const transferProposalsForMe: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
       .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
-      .filter(tp => (tp[1].intermediary === username && tp[1].destination === username)),
+      .filter(tp => (tp[1].path[0] === username && tp[1].destination === username)),
     [allTransferProposals, username]
   );
 
@@ -115,11 +115,12 @@ const MainView: React.FC = () => {
   }
 
   // Initiate a new transfer
-  const initiate = async (origin: string, source: string, destination: string, intermediary: string,
+  const initiate = async (origin: string, destination: string, intermediary: string,
     amount: Decimal, hash: string): Promise<boolean> => {
     try {
+      const path = [intermediary, origin]
       await ledger.create(Hawala.TransferProposal,
-        {origin, source, destination, intermediary, amount, hash, link: null});
+        {path, destination, amount, hash, link: null});
       return true;
     } catch (error) {
       alert(`Unknown error:\n${JSON.stringify(error)}`);
@@ -152,7 +153,6 @@ const MainView: React.FC = () => {
               <Divider />
               <InitiateEdit
                 users={users}
-                partyToAlias={partyToAlias}
                 username={username}
                 onInitiate={initiate}
               />
