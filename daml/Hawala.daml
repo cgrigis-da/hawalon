@@ -73,10 +73,8 @@ template TransferProposal with
     hash: Text
     link: Optional (ContractId LockedIou)
   where
-    -- 2nd element (the sender)
-    signatory path List.!! 1
-    -- last element (the origin), 1st element (the receiver), the destination
-    observer List.last path, List.head path, destination
+    signatory path List.!! 1 -- sender
+    observer List.head path -- receiver
 
     ensure ((List.length path >= 2) && (List.unique path))
 
@@ -87,7 +85,7 @@ template TransferProposal with
       do
         assertMsg "Receiver is already in the chain" (notElem next path)
 
-        let sender = List.head (List.tail path)
+        let sender = path List.!! 1
         let receiver = List.head path
         assertMsg "Receiver cannot be destination" (receiver /= destination)
 
@@ -111,7 +109,7 @@ template TransferProposal with
     choice Accept: ContractId LockedIou
       controller List.head path -- receiver
       do
-        let sender = List.head (List.tail path)
+        let sender = path List.!! 1
         let receiver = List.head path
         assertMsg "Receiver must be destination" (receiver == destination)
 
