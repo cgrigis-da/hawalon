@@ -6,23 +6,16 @@ import { Container, Grid, Header, Icon, Segment, Divider } from 'semantic-ui-rea
 import { Party, ContractId, Decimal } from '@daml/types';
 import { User, Hawala } from '@daml.js/my-app';
 import { publicContext, userContext } from './App';
-import UserList from './UserList';
-import PartyListEdit from './PartyListEdit';
 import LockedIouList from './LockedIouList';
 import IouList from './IouList';
 import TransferProposalList from './TransferProposalList';
 import TransferProposalForMeList from './TransferProposalForMeList';
-import { LockedIou } from '@daml.js/my-app/lib/Hawala';
 import InitiateEdit from './InitiateEdit';
 
 // USERS_BEGIN
 const MainView: React.FC = () => {
   const username = userContext.useParty();
-  const myUserResult = userContext.useStreamFetchByKeys(User.User, () => [username], [username]);
   const aliases = publicContext.useStreamQueries(User.Alias, () => [], []);
-  const myUser = myUserResult.contracts[0]?.payload;
-  const allUsers = userContext.useStreamQueries(User.User).contracts;
-  const allHawalaAccounts = userContext.useStreamQueries(Hawala.HawalaAccount).contracts;
 
   const allIous = userContext.useStreamQueries(Hawala.Iou).contracts;
   const allLockedIous = userContext.useStreamQueries(Hawala.LockedIou).contracts;
@@ -82,21 +75,9 @@ const MainView: React.FC = () => {
     [allReveals]
   );
 
-  // FOLLOW_BEGIN
   const ledger = userContext.useLedger();
 
-  const follow = async (userToFollow: Party): Promise<boolean> => {
-    try {
-      await ledger.exerciseByKey(User.User.Follow, username, {userToFollow});
-      return true;
-    } catch (error) {
-      alert(`Unknown error:\n${JSON.stringify(error)}`);
-      return false;
-    }
-  }
-  // FOLLOW_END
-
-  const unlock = async (cid: ContractId<LockedIou>): Promise<boolean> => {
+  const unlock = async (cid: ContractId<Hawala.LockedIou>): Promise<boolean> => {
     try {
       const password: string = prompt("Please enter password") || "";
       await ledger.exercise(Hawala.LockedIou.Unlock, cid, {password});

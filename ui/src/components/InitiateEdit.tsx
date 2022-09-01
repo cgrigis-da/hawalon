@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Icon, List, Form, Button , Label, Message, Modal, Header} from 'semantic-ui-react'
-import { Party, ContractId } from '@daml/types';
-import { User, Hawala } from '@daml.js/my-app';
+import { Icon, List, Form, Button , Label, Modal, Header} from 'semantic-ui-react'
+import { Party } from '@daml/types';
+import { User } from '@daml.js/my-app';
 import { sha256 } from 'js-sha256';
 
 type Props = {

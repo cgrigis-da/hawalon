@@ -3,7 +3,6 @@ module Setup where
 import DA.Foldable (forA_)
 import DA.Optional (fromSomeNote)
 import qualified DA.Text as T
-import qualified DA.List as List
 import Daml.Script
 import qualified User as U
 import Hawala

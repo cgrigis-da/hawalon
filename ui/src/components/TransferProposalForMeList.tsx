@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Icon, List, Form, Button } from 'semantic-ui-react'
+import { List, Button } from 'semantic-ui-react'
 import { Party, ContractId } from '@daml/types';
-import { User, Hawala } from '@daml.js/my-app';
+import { Hawala } from '@daml.js/my-app';
 
 type Props = {
   transferProposals: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][];

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Button, Icon, List } from 'semantic-ui-react'
+import { Icon, List } from 'semantic-ui-react'
 import { Party, ContractId } from '@daml/types';
-import { User, Hawala } from '@daml.js/my-app';
+import { Hawala } from '@daml.js/my-app';
 
 type Props = {
   lockedIous: [ContractId<Hawala.LockedIou>, Hawala.LockedIou][];
