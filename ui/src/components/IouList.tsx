@@ -13,8 +13,7 @@ type Props = {
 }
 
 /**
- * React component to display a list of `User`s.
- * Every party in the list can be added as a friend.
+ * React component to display a list of IOUs
  */
 const LockedIouList: React.FC<Props> = ({ious, partyToAlias, onRedeem}) => {
   return (

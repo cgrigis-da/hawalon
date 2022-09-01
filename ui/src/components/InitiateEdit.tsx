@@ -16,10 +16,9 @@ type Props = {
 }
 
 /**
- * React component to display a list of `User`s.
- * Every party in the list can be added as a friend.
+ * React component allowing a user to edit and initiate a transfer
  */
-const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, onInitiate}) => {
+const InitiateEdit: React.FC<Props> = ({users, partyToAlias, username, onInitiate}) => {
   const [destination, setDestination] = React.useState<string>("");
   const [intermediary, setIntermediary] = React.useState<string>("");
   const [amount, setAmount] = React.useState<string>("");
@@ -31,7 +30,8 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
     return {
       key: user.username,
       text: user.alias,
-      value: user.username};
+      value: user.username,
+    };
   }
   const options = [...users].map((user: User.Alias) => userToOption(user));
 
@@ -122,4 +122,4 @@ const TransferProposalList: React.FC<Props> = ({users, partyToAlias, username, o
   );
 };
 
-export default TransferProposalList;
+export default InitiateEdit;

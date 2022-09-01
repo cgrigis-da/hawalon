@@ -11,28 +11,28 @@ type Props = {
   partyToAlias: Map<Party, string>;
   username: string;
   users: User.Alias[];
-  onChain: (cid: ContractId<Hawala.TransferProposal>, party: string) => Promise<boolean>;
+  onForward: (cid: ContractId<Hawala.TransferProposal>, party: string) => Promise<boolean>;
 }
 
 /**
- * React component to display a list of `User`s.
- * Every party in the list can be added as a friend.
+ * React component to display a list of `TransferProposal`s, which can be forwarded to a new party
  */
-const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, users, onChain}) => {
+const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, users, onForward}) => {
   const [next, setNext] = React.useState<[ContractId<Hawala.TransferProposal>, string] | undefined>(undefined);
 
   const userToOption = (user: User.Alias) => {
     return {
       key: user.username,
       text: user.alias,
-      value: user.username};
+      value: user.username,
+    };
   }
   const options = [...users].map((user: User.Alias) => userToOption(user));
 
   const onSubmit = async (event?: React.FormEvent) => {
     if (next === undefined) return;
 
-    await onChain(next[0], next[1]);
+    await onForward(next[0], next[1]);
   }
 
   return (

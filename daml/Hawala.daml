@@ -79,7 +79,7 @@ template TransferProposal with
     -- FIXME: use a path: [Party] + destination
     ensure (origin /= destination) && (origin /= intermediary) && (source /= destination) && (source /= intermediary)
 
-    choice AcceptAndChain: (ContractId TransferProposal, ContractId LockedIou)
+    choice AcceptAndForward: (ContractId TransferProposal, ContractId LockedIou)
       with
         next: Party
       controller intermediary
@@ -173,7 +173,7 @@ test_full_transfer = script do
   let password = "Abracadabra"
   let amount = 100.0
 
-  p <- submit alice do
+  tp <- submit alice do
     createCmd TransferProposal with
       origin = alice
       source = alice
@@ -185,19 +185,19 @@ test_full_transfer = script do
 
   -- Hawaladar1 cannot exercise the final accept because he is not the final destination
   submitMustFail hawaladar1 do
-    exerciseCmd p Accept
+    exerciseCmd tp Accept
 
-  (p, l1) <- submit hawaladar1 do
-    exerciseCmd p AcceptAndChain with next = hawaladar2
-  (p, l2) <- submit hawaladar2 do
-    exerciseCmd p AcceptAndChain with next = bob
+  (tp, l1) <- submit hawaladar1 do
+    exerciseCmd tp AcceptAndForward with next = hawaladar2
+  (tp, l2) <- submit hawaladar2 do
+    exerciseCmd tp AcceptAndForward with next = bob
 
-  -- Bob cannot accept and chain because he is the final destination
+  -- Bob cannot accept and forward because he is the final destination
   submitMustFail bob do
-    exerciseCmd p AcceptAndChain with next = bob
+    exerciseCmd tp AcceptAndForward with next = bob
 
   l3 <- submit bob do
-    exerciseCmd p Accept
+    exerciseCmd tp Accept
 
   submit bob do
     exerciseCmd l3 Unlock with

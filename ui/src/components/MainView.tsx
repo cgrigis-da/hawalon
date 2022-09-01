@@ -46,7 +46,8 @@ const MainView: React.FC = () => {
     [allIous, username]
   );
 
-  // Transfer proposals
+  // Transfer proposals:
+  // - to forward
   const transferProposalsToForward: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
       .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
@@ -54,6 +55,7 @@ const MainView: React.FC = () => {
     [allTransferProposals, username]
   );
 
+  // - to accept
   const transferProposalsForMe: [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal][] = useMemo(() =>
     allTransferProposals
       .map(tp => [tp.contractId, tp.payload] as [ContractId<Hawala.TransferProposal>, Hawala.TransferProposal])
@@ -68,6 +70,7 @@ const MainView: React.FC = () => {
     [allLockedIous]
   );
 
+  // Map to associate locked IOUs to their password
   const lockedIouToPw = useMemo(() =>
     new Map<ContractId<Hawala.LockedIou>, string>(
       allReveals
@@ -77,6 +80,7 @@ const MainView: React.FC = () => {
 
   const ledger = userContext.useLedger();
 
+  // Unlock a locked IOU
   const unlock = async (cid: ContractId<Hawala.LockedIou>): Promise<boolean> => {
     try {
       const password: string = prompt("Please enter password") || "";
@@ -88,9 +92,10 @@ const MainView: React.FC = () => {
     }
   }
 
-  const chain = async (cid: ContractId<Hawala.TransferProposal>, party: string): Promise<boolean> => {
+  // Accept a transfer proposal and forward it to the next hop
+  const forward = async (cid: ContractId<Hawala.TransferProposal>, party: string): Promise<boolean> => {
     try {
-      await ledger.exercise(Hawala.TransferProposal.AcceptAndChain, cid, {next: party});
+      await ledger.exercise(Hawala.TransferProposal.AcceptAndForward, cid, {next: party});
       return true;
     } catch (error) {
       alert(`Unknown error:\n${JSON.stringify(error)}`);
@@ -98,6 +103,7 @@ const MainView: React.FC = () => {
     }
   }
 
+  // Accept a transfer proposal
   const accept = async (cid: ContractId<Hawala.TransferProposal>): Promise<boolean> => {
     try {
       await ledger.exercise(Hawala.TransferProposal.Accept, cid, {});
@@ -108,6 +114,7 @@ const MainView: React.FC = () => {
     }
   }
 
+  // Initiate a new transfer
   const initiate = async (origin: string, source: string, destination: string, intermediary: string,
     amount: Decimal, hash: string): Promise<boolean> => {
     try {
@@ -120,6 +127,7 @@ const MainView: React.FC = () => {
     }
   }
 
+  // Redeem an IOU
   const redeem = async (iou: Hawala.Iou): Promise<boolean> => {
     return true;
   }
@@ -197,7 +205,7 @@ const MainView: React.FC = () => {
                 partyToAlias={partyToAlias}
                 username={username}
                 users={users}
-                onChain={chain}
+                onForward={forward}
               />
             </Segment>
 

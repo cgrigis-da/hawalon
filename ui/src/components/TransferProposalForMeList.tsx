@@ -14,10 +14,9 @@ type Props = {
 }
 
 /**
- * React component to display a list of `User`s.
- * Every party in the list can be added as a friend.
+ * React component to display a list of `TransferProposal`s, which can be accepted by the user
  */
-const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, onAccept}) => {
+const TransferProposalForMeList: React.FC<Props> = ({transferProposals, partyToAlias, username, onAccept}) => {
   return (
     <List divided relaxed>
       {[...transferProposals].map(tp =>
@@ -39,4 +38,4 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
   );
 };
 
-export default TransferProposalList;
+export default TransferProposalForMeList;

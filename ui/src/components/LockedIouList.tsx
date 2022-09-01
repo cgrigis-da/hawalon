@@ -15,8 +15,7 @@ type Props = {
 }
 
 /**
- * React component to display a list of `User`s.
- * Every party in the list can be added as a friend.
+ * React component to display a list of locked IOUs, which can be unlocked by the user
  */
 const LockedIouList: React.FC<Props> = ({lockedIous, lockedIouToPw, partyToAlias, username, onUnlock}) => {
   const renderLockedIou = (liou: [ContractId<Hawala.LockedIou>, Hawala.LockedIou]) => {

@@ -18,7 +18,7 @@ autoForward = T.Trigger with
 
     forA_ my_tps $ \(cid, tp) -> do
       -- Forward to destination
-      T.dedupExercise cid (Hawala.AcceptAndChain tp.destination)
+      T.dedupExercise cid (Hawala.AcceptAndForward tp.destination)
       debug $ "Handled TP: " <> show tp
 
     -- Retrieve all revealed passwords
