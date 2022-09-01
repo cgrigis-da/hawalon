@@ -93,7 +93,7 @@ const InitiateEdit: React.FC<Props> = ({users, username, onInitiate}) => {
           onChange={(event, { value }) => setIntermediary(value?.toString() ?? "")}
         />
 
-        <Button type="submit" enabled={enabled} className="test-select-forward-button">
+        <Button type="submit" enabled={enabled.toString()} className="test-select-forward-button">
           Initiate transfer
         </Button>
       </Form>

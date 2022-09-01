@@ -18,7 +18,9 @@ type Props = {
  * React component to display a list of `TransferProposal`s, which can be forwarded to a new party
  */
 const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias, username, users, onForward}) => {
-  const [next, setNext] = React.useState<[ContractId<Hawala.TransferProposal>, string] | undefined>(undefined);
+  const initVal = new Array(transferProposals.length).fill(undefined);
+  const [next, setNext] =
+    React.useState<Array<[ContractId<Hawala.TransferProposal>, string] | undefined>>(initVal);
 
   const userToOption = (user: User.Alias) => {
     return {
@@ -29,15 +31,16 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
   }
   const options = [...users].map((user: User.Alias) => userToOption(user));
 
-  const onSubmit = async (event?: React.FormEvent) => {
-    if (next === undefined) return;
+  const onSubmit = (index: number) => async (event?: React.FormEvent) => {
+    const nextElem = next[index];
+    if (nextElem === undefined) return;
 
-    await onForward(next[0], next[1]);
+    await onForward(nextElem[0], nextElem[1]);
   }
 
   return (
     <List divided relaxed>
-      {[...transferProposals].map(tp =>
+      {[...transferProposals].map((tp, index) =>
         <List.Item key={tp[1].destination}>
           <List.Content>
             <List.Header>
@@ -51,7 +54,7 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
               Amount: {tp[1].amount}
             </List.Header>
 
-            <Form onSubmit={onSubmit}>
+            <Form onSubmit={onSubmit(index)}>
               <Form.Select
                 fluid
                 search
@@ -59,9 +62,11 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
                 additionLabel="Insert a party identifier: "
                 additionPosition="bottom"
                 className="test-select-follow-input"
-                value={next ? next[1] : ""}
                 options={options}
-                onChange={(event, { value }) => setNext([tp[0], value?.toString() ?? ""])}
+                onChange={(event, { value }) => {
+                  next[index] = [tp[0], value?.toString() ?? ""];
+                  setNext(next);
+                }}
               />
               <Button type="submit" className="test-select-forward-button">
                 Forward
