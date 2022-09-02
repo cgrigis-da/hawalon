@@ -10,7 +10,7 @@ import DA.Optional
 
 template HawalaAccount with
     owner: Party
-    fee: Decimal
+    fee: Decimal -- value between 0 and 1, indicating the proportion of the amount to be deducted as a fee during a transfer
     observers: [Party]
   where
     signatory owner
@@ -42,8 +42,10 @@ template Iou with
 
 template LockedIou with
     iou: Iou
-    hash: Text
-    link: Optional (ContractId LockedIou)
+    hash: Text -- hash of the password required for unlocking
+    -- TODO: rename hash -> passwordHash?hash of the password required for unlocking
+    link: Optional (ContractId LockedIou) -- the previous LockedIou in the hawala chain
+    -- TODO: rename link -> previous?
   where
     signatory iou.issuer
     observer iou.owner
@@ -58,6 +60,7 @@ template LockedIou with
         create iou
 
         whenSome link $ \cid -> do
+          -- Inform the iou.issuer that password can also be used to unlock cid
           create Reveal with
             owner = iou.issuer
             cid
@@ -67,11 +70,15 @@ template LockedIou with
         return ()
 
 template TransferProposal with
-    path: [Party] -- stored from last to origin
+    -- Stores the parties that have already been involved in the transfer from newest to latest.
+    -- The first element is the next potential receiver.
+    -- The second element has received the transfer last.
+    -- The last element is the original sender.
+    path: [Party] 
     destination: Party
     amount: Decimal
-    hash: Text
-    link: Optional (ContractId LockedIou)
+    hash: Text -- TODO: rename to passwordHash?
+    link: Optional (ContractId LockedIou) -- TODO: rename to previous?
   where
     signatory path List.!! 1 -- sender
     observer List.head path -- receiver
