@@ -135,7 +135,7 @@ const MainView: React.FC = () => {
 
   return (
     <Container>
-      <Grid centered columns={2}>
+      <Grid centered columns={1}>
         <Grid.Row stretched>
           <Grid.Column>
             <Header as='h1' size='huge' color='blue' textAlign='center' style={{padding: '1ex 0em 0ex 0em'}}>
@@ -214,7 +214,7 @@ const MainView: React.FC = () => {
                 <Icon name='exchange' />
                 <Header.Content>
                   In progress
-                  <Header.Subheader>Transfers in which I participate</Header.Subheader>
+                  <Header.Subheader>IOUs in which I participate</Header.Subheader>
                 </Header.Content>
               </Header>
               <Divider />

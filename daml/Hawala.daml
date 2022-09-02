@@ -83,7 +83,7 @@ template TransferProposal with
         next: Party
       controller List.head path -- receiver
       do
-        assertMsg "Receiver is already in the chain" (notElem next path)
+        assertMsg "Next is already in the chain" (notElem next path)
 
         let sender = path List.!! 1
         let receiver = List.head path
@@ -114,7 +114,10 @@ template TransferProposal with
         assertMsg "Receiver must be destination" (receiver == destination)
 
         create LockedIou with
-          iou = Iou with issuer = sender; owner = receiver; amount
+          iou = Iou with
+            issuer = sender
+            owner = receiver
+            amount
           hash
           link
 
@@ -183,7 +186,7 @@ test_full_transfer = script do
       path = [hawaladar1, alice]
       destination = bob
       amount = 100.0
-      hash = Text.sha256 "Abracadabra"
+      hash = Text.sha256 password
       link = None
 
   -- Hawaladar1 cannot exercise the final accept because he is not the final destination

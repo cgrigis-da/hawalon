@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { List, Form, Button } from 'semantic-ui-react'
+import { Table, Form, Button, Icon, Container, Grid } from 'semantic-ui-react'
 import { Party, ContractId } from '@daml/types';
 import { User, Hawala } from '@daml.js/hawalon';
 
@@ -38,45 +38,66 @@ const TransferProposalList: React.FC<Props> = ({transferProposals, partyToAlias,
     await onForward(nextElem[0], nextElem[1]);
   }
 
-  return (
-    <List divided relaxed>
-      {[...transferProposals].map((tp, index) =>
-        <List.Item key={tp[1].destination}>
-          <List.Content>
-            <List.Header>
-              Transfer: {partyToAlias.get(tp[1].path[tp[1].path.length - 1])}
-              → {partyToAlias.get(tp[1].destination)}
-            </List.Header>
-            <List.Header>
-              Received from: {partyToAlias.get(tp[1].path[1])}
-            </List.Header>
-            <List.Header>
-              Amount: {tp[1].amount}
-            </List.Header>
+  return (transferProposals.length > 0 ? (
+    <Table basic='very' compact ='very' celled>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Transfer</Table.HeaderCell>
+          <Table.HeaderCell>Sender</Table.HeaderCell>
+          <Table.HeaderCell>Amount</Table.HeaderCell>
+          <Table.HeaderCell>Forward To</Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
 
-            <Form onSubmit={onSubmit(index)}>
-              <Form.Select
-                fluid
-                search
-                allowAdditions
-                additionLabel="Insert a party identifier: "
-                additionPosition="bottom"
-                className="test-select-follow-input"
-                options={options}
-                onChange={(event, { value }) => {
-                  next[index] = [tp[0], value?.toString() ?? ""];
-                  setNext(next);
-                }}
-              />
-              <Button type="submit" className="test-select-forward-button">
-                Forward
-              </Button>
-            </Form>
-          </List.Content>
-        </List.Item>
-      )}
-    </List>
-  );
+      <Table.Body>
+        {[...transferProposals].map((tp, index) =>
+          <Table.Row>
+            <Table.Cell>
+              {partyToAlias.get(tp[1].path[tp[1].path.length - 1])}
+              <Icon name='long arrow alternate right' />
+              {partyToAlias.get(tp[1].destination)}
+            </Table.Cell>
+            <Table.Cell>{partyToAlias.get(tp[1].path[1])}</Table.Cell>
+            <Table.Cell>{tp[1].amount}</Table.Cell>
+            <Table.Cell textAlign='center'>
+              <Form onSubmit={onSubmit(index)}>
+                <Grid columns={2}>
+                    <Grid.Row>
+                      <Grid.Column width={10}>
+                        <Form.Select
+                          fluid
+                          search
+                          allowAdditions
+                          additionLabel="Insert a party identifier: "
+                          additionPosition="bottom"
+                          className="test-select-follow-input"
+                          // Keep only the elements not present in the transfer proposal's path
+                          options={options.filter(o => 
+                            !tp[1].path.map(u => partyToAlias.get(u)).includes(o.text))}
+                          onChange={(event, { value }) => {
+                            next[index] = [tp[0], value?.toString() ?? ""];
+                            setNext(next);
+                          }}
+                        />
+                      </Grid.Column>
+                      <Grid.Column width={1}>
+                        <Button size='small' type="submit" className="test-select-forward-button">
+                          Go
+                        </Button>
+                      </Grid.Column>
+                    </Grid.Row>
+                </Grid>
+              </Form>
+            </Table.Cell>
+          </Table.Row>
+        )}
+      </Table.Body>
+    </Table>
+  ) : (
+    <Container align='center'>
+      <Icon name='minus' />
+    </Container>
+  ));
 };
 
 export default TransferProposalList;

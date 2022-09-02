@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Icon, List, Form, Button , Label, Modal, Header} from 'semantic-ui-react'
+import { Icon, List, Form, Button, Modal, Header, Grid } from 'semantic-ui-react'
 import { User } from '@daml.js/hawalon';
 import { sha256 } from 'js-sha256';
 
@@ -16,7 +16,7 @@ type Props = {
 /**
  * React component allowing a user to edit and initiate a transfer
  */
-const InitiateEdit: React.FC<Props> = ({users, username, onInitiate}) => {
+const InitiateEdit: React.FC<Props> = ({ users, username, onInitiate }) => {
   const [destination, setDestination] = React.useState<string>("");
   const [intermediary, setIntermediary] = React.useState<string>("");
   const [amount, setAmount] = React.useState<string>("");
@@ -37,7 +37,7 @@ const InitiateEdit: React.FC<Props> = ({users, username, onInitiate}) => {
     const hash = sha256(password);
 
     setEnabled(false);
-    
+
     const success = await onInitiate(username, destination, intermediary, amount, hash);
     if (success) {
       setDestination("");
@@ -52,50 +52,82 @@ const InitiateEdit: React.FC<Props> = ({users, username, onInitiate}) => {
 
   return (
     <List.Content>
-      <Form onSubmit={onSubmit}>
-        <Label>Destination</Label>
-        <Form.Select
-          fluid
-          search
-          allowAdditions
-          additionLabel="Insert a party identifier: "
-          additionPosition="bottom"
-          className="test-select-destination-input"
-          value={destination ?? ""}
-          options={options}
-          onChange={(event, { value }) => setDestination(value?.toString() ?? "")}
-        />
+      <Form size='small' onSubmit={onSubmit}>
+        <Grid relaxed='very' columns={2} textAlign='center'>
+          <Grid.Row>
+            <Grid.Column width={2} verticalAlign='middle'>
+              Destination:
+            </Grid.Column>
 
-        <Form.Input
-          label='Amount'
-          type='number'
-          value={amount}
-          onChange={(event, { value }) => setAmount(value?.toString() ?? "")}
-        />
+            <Grid.Column width={12}>
+              <Form.Select
+                fluid
+                search
+                allowAdditions
+                additionLabel="Insert a party identifier: "
+                additionPosition="bottom"
+                className="test-select-destination-input"
+                value={destination ?? ""}
+                options={options}
+                onChange={(event, { value }) => setDestination(value?.toString() ?? "")}
+              />
+            </Grid.Column>
+          </Grid.Row>
 
-        <Form.Input
-          label='Password'
-          type='password'
-          value={password}
-          onChange={(event, { value }) => setPassword(value?.toString() ?? "")}
-        />
+          <Grid.Row>
+            <Grid.Column width={2} verticalAlign='middle'>
+              Amount:
+            </Grid.Column>
 
-        <Label>Intermediary</Label>
-        <Form.Select
-          fluid
-          search
-          allowAdditions
-          additionLabel="Insert a party identifier: "
-          additionPosition="bottom"
-          className="test-select-destination-input"
-          value={intermediary ?? ""}
-          options={options}
-          onChange={(event, { value }) => setIntermediary(value?.toString() ?? "")}
-        />
+            <Grid.Column width={12}>
+              <Form.Input
+                type='number'
+                value={amount}
+                onChange={(event, { value }) => setAmount(value?.toString() ?? "")}
+              />
+            </Grid.Column>
+          </Grid.Row>
 
-        <Button type="submit" enabled={enabled.toString()} className="test-select-forward-button">
-          Initiate transfer
-        </Button>
+          <Grid.Row>
+            <Grid.Column width={2} verticalAlign='middle'>
+              Password:
+            </Grid.Column>
+
+            <Grid.Column width={12}>
+              <Form.Input
+                type='password'
+                value={password}
+                onChange={(event, { value }) => setPassword(value?.toString() ?? "")}
+              />
+            </Grid.Column>
+          </Grid.Row>
+
+          <Grid.Row>
+            <Grid.Column width={2} verticalAlign='middle'>
+              Intermediary:
+            </Grid.Column>
+
+            <Grid.Column width={12}>
+              <Form.Select
+                fluid
+                search
+                allowAdditions
+                additionLabel="Insert a party identifier: "
+                additionPosition="bottom"
+                className="test-select-destination-input"
+                value={intermediary ?? ""}
+                options={options}
+                onChange={(event, { value }) => setIntermediary(value?.toString() ?? "")}
+              />
+            </Grid.Column>
+          </Grid.Row>
+
+          <Grid.Row columns={1} textAlign='center'>
+            <Button size='small' ype="submit" disabled={!enabled} className="test-select-forward-button">
+              Initiate transfer
+            </Button>
+          </Grid.Row>
+        </Grid>
       </Form>
 
       <Modal

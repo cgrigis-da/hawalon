@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { List, Button } from 'semantic-ui-react'
+import { Table, Container, Icon, Button } from 'semantic-ui-react'
 import { Party, ContractId } from '@daml/types';
 import { Hawala } from '@daml.js/hawalon';
 
@@ -16,30 +16,38 @@ type Props = {
 /**
  * React component to display a list of `TransferProposal`s, which can be accepted by the user
  */
-const TransferProposalForMeList: React.FC<Props> = ({transferProposals, partyToAlias, username, onAccept}) => {
-  return (
-    <List divided relaxed>
-      {[...transferProposals].map(tp =>
-        <List.Item key={tp[1].destination}>
-          <List.Content>
-          <List.Header>
-              Transfer originating from: {partyToAlias.get(tp[1].path[tp[1].path.length - 1])}
-            </List.Header>
-            <List.Header>
-              Received from: {partyToAlias.get(tp[1].path[1])}
-            </List.Header>
-            <List.Header>
-              Amount: {tp[1].amount}
-            </List.Header>
+const TransferProposalForMeList: React.FC<Props> = ({ transferProposals, partyToAlias, username, onAccept }) => {
+  return (transferProposals.length > 0 ? (
+    <Table basic='very' compact ='very' celled>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Origin</Table.HeaderCell>
+          <Table.HeaderCell>Sender</Table.HeaderCell>
+          <Table.HeaderCell>Amount</Table.HeaderCell>
+          <Table.HeaderCell></Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
 
-              <Button type="submit" className="test-select-accept-button" onClick={() => onAccept(tp[0])}>
+      <Table.Body>
+        {[...transferProposals].map((tp, index) =>
+          <Table.Row>
+            <Table.Cell>{partyToAlias.get(tp[1].path[tp[1].path.length - 1])}</Table.Cell>
+            <Table.Cell>{partyToAlias.get(tp[1].path[1])}</Table.Cell>
+            <Table.Cell>{tp[1].amount}</Table.Cell>
+            <Table.Cell textAlign='center'>
+              <Button size='small' type="submit" className="test-select-accept-button" onClick={() => onAccept(tp[0])}>
                 Accept
               </Button>
-          </List.Content>
-        </List.Item>
-      )}
-    </List>
-  );
+            </Table.Cell>
+          </Table.Row>
+        )}
+      </Table.Body>
+    </Table>
+  ) : (
+    <Container align='center'>
+      <Icon name='minus' />
+    </Container>
+  ));
 };
 
 export default TransferProposalForMeList;

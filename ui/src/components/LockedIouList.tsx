@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import React from 'react'
-import { Icon, List } from 'semantic-ui-react'
+import { Icon, Container, Table, Button, Popup } from 'semantic-ui-react'
 import { Party, ContractId } from '@daml/types';
 import { Hawala } from '@daml.js/hawalon';
 
@@ -23,43 +23,64 @@ const LockedIouList: React.FC<Props> = ({lockedIous, lockedIouToPw, partyToAlias
 
     if (l.iou.owner === username) {
       return (
-        <List.Content>
-          <List.Header>
-            from {partyToAlias.get(l.iou.issuer)}: {l.iou.amount}
-          </List.Header>
-          <List.Header>
-            password: {lockedIouToPw.get(cid) ?? "UNKNOWN"}
-          </List.Header>
-          <List.Content floated='right'>
-            <Icon
-              name='key'
-              link
-              size='large'
-              className='test-select-unlock-iou-icon'
-              onClick={() => onUnlock(cid)} />
-          </List.Content>
-        </List.Content>
+        <Table.Row>
+          <Table.Cell>
+            <Icon name='long arrow alternate left' />
+            {partyToAlias.get(l.iou.issuer)}
+          </Table.Cell>
+          <Table.Cell>{l.iou.amount}</Table.Cell>
+          <Table.Cell>
+            <Popup
+              content={lockedIouToPw.get(cid) ?? "UNKNOWN"}
+              disabled={lockedIouToPw.get(cid) === undefined}
+              trigger={
+                <Icon
+                  name={lockedIouToPw.get(cid) ? 'lock open' : 'lock'}
+                  className='test-select-unlock-iou-icon'
+                />
+              }
+            />
+            <Button type='submit' size='small' onClick={(event, { value }) => onUnlock(cid)} content='Unlock' />
+          </Table.Cell>
+        </Table.Row>
       )
     } else {
       return (
-        <List.Content>
-          <List.Header>
-            to {partyToAlias.get(l.iou.owner)}: {l.iou.amount}
-          </List.Header>
-        </List.Content>
+        <Table.Row>
+          <Table.Cell>
+            <Icon name='long arrow alternate right' />
+          {partyToAlias.get(l.iou.owner)}
+          </Table.Cell>
+          <Table.Cell>{l.iou.amount}</Table.Cell>
+          <Table.Cell>
+            <Icon name='minus' />
+          </Table.Cell>
+        </Table.Row>
       )
     }
   }
 
-  return (
-    <List divided relaxed>
-      {[...lockedIous].map((l, index) =>
-        <List.Item key={index}>
-          {renderLockedIou(l)}
-        </List.Item>
-      )}
-    </List>
-  );
+  return (lockedIous.length > 0 ? (
+    <Table basic='very' compact='very' celled>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Partner</Table.HeaderCell>
+          <Table.HeaderCell>Amount</Table.HeaderCell>
+          <Table.HeaderCell>Action</Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
+
+      <Table.Body>
+        {[...lockedIous].map((l, index) =>
+          renderLockedIou(l)
+        )}
+      </Table.Body>
+    </Table>
+  ) : (
+    <Container align='center'>
+      <Icon name='minus' />
+    </Container>
+  ));
 };
 
 export default LockedIouList;
