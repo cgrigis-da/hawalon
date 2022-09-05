@@ -116,11 +116,11 @@ const MainView: React.FC = () => {
 
   // Initiate a new transfer
   const initiate = async (origin: string, destination: string, intermediary: string,
-    amount: Decimal, hash: string): Promise<boolean> => {
+    amount: Decimal, passwordHash: string): Promise<boolean> => {
     try {
       const path = [intermediary, origin]
       await ledger.create(Hawala.TransferProposal,
-        {path, destination, amount, hash, link: null});
+        {path, destination, amount, passwordHash, previous: null});
       return true;
     } catch (error) {
       alert(`Unknown error:\n${JSON.stringify(error)}`);

@@ -10,7 +10,7 @@ type Props = {
   users: User.Alias[];
   username: string;
   onInitiate: (origin: string, destination: string, intermediary: string,
-    amount: string, hash: string) => Promise<boolean>;
+    amount: string, passwordHash: string) => Promise<boolean>;
 }
 
 /**
@@ -34,11 +34,11 @@ const InitiateEdit: React.FC<Props> = ({ users, username, onInitiate }) => {
   const options = [...users].map((user: User.Alias) => userToOption(user));
 
   const onSubmit = async (event?: React.FormEvent) => {
-    const hash = sha256(password);
+    const passwordHash = sha256(password);
 
     setEnabled(false);
 
-    const success = await onInitiate(username, destination, intermediary, amount, hash);
+    const success = await onInitiate(username, destination, intermediary, amount, passwordHash);
     if (success) {
       setDestination("");
       setIntermediary("");

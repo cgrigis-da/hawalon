@@ -10,11 +10,13 @@ import DA.Optional
 
 template HawalaAccount with
     owner: Party
-    fee: Decimal
+    fee: Decimal -- value between 0 and 1, indicating the proportion of the amount to be deducted as a fee during a transfer
     observers: [Party]
   where
     signatory owner
     observer observers
+
+    ensure (fee >= 0.0 && fee < 1.0)
 
     key owner: Party
     maintainer key
@@ -42,8 +44,8 @@ template Iou with
 
 template LockedIou with
     iou: Iou
-    hash: Text
-    link: Optional (ContractId LockedIou)
+    passwordHash: Text -- hash of the password required for unlocking
+    previous: Optional (ContractId LockedIou) -- the previous LockedIou in the Hawala chain
   where
     signatory iou.issuer
     observer iou.owner
@@ -53,11 +55,12 @@ template LockedIou with
         password: Text
       controller iou.owner
       do
-        assertMsg "Invalid password" (Text.sha256 password == hash)
+        assertMsg "Invalid password" (Text.sha256 password == passwordHash)
 
         create iou
 
-        whenSome link $ \cid -> do
+        whenSome previous $ \cid -> do
+          -- Inform the iou.issuer that password can also be used to unlock cid
           create Reveal with
             owner = iou.issuer
             cid
@@ -67,11 +70,15 @@ template LockedIou with
         return ()
 
 template TransferProposal with
+    -- Stores the parties that have already been involved in the transfer from newest to oldest.
+    -- The first element is the next potential receiver.
+    -- The second element has received the transfer last.
+    -- The last element is the original sender.
     path: [Party] -- stored from last to origin
     destination: Party
     amount: Decimal
-    hash: Text
-    link: Optional (ContractId LockedIou)
+    passwordHash: Text
+    previous: Optional (ContractId LockedIou)
   where
     signatory path List.!! 1 -- sender
     observer List.head path -- receiver
@@ -96,13 +103,13 @@ template TransferProposal with
             issuer = sender
             owner = receiver
             amount
-          hash
-          link
+          passwordHash
+          previous
 
         p <- create this with
           path = (next :: path)
           amount = amount * (1.0 - account.fee)
-          link = Some l
+          previous = Some l
 
         return (p, l)
 
@@ -118,8 +125,8 @@ template TransferProposal with
             issuer = sender
             owner = receiver
             amount
-          hash
-          link
+          passwordHash
+          previous
 
 template Reveal with
     owner: Party
@@ -139,13 +146,13 @@ test_simple_unlock = script do
 
   let password = "Abracadabra"
   let badPassword = "Open sesame"
-  let hash = Text.sha256 password
+  let passwordHash = Text.sha256 password
 
   lockedIou <- submit alice do
     createCmd LockedIou with
       iou = Iou with issuer = alice; owner = bob; amount = 100.0
-      hash = hash
-      link = None
+      passwordHash
+      previous = None
 
   -- Alice can't unlock with an incorrect password
   submitMustFail alice do
@@ -186,8 +193,8 @@ test_full_transfer = script do
       path = [hawaladar1, alice]
       destination = bob
       amount = 100.0
-      hash = Text.sha256 password
-      link = None
+      passwordHash = Text.sha256 password
+      previous = None
 
   -- Hawaladar1 cannot exercise the final accept because he is not the final destination
   submitMustFail hawaladar1 do
